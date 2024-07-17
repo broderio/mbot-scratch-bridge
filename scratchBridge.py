@@ -5,6 +5,15 @@ import json
 from mbot_bridge.api import MBot
 import time
 
+from camera import CameraHandler
+
+import os
+from PIL import Image
+import numpy as np
+from joblib import dump, load
+
+PATH_TO_MODEL = "two_layer_nn.joblib"
+
 mbot = MBot()
 in_msgs = []
 out_msgs = []
@@ -59,6 +68,10 @@ def parse_json_msg(message):
 def parse_msgs():
     global mbot, in_msgs, out_msgs, isConnected
 
+    clf = load(PATH_TO_MODEL)
+
+    camera = CameraHandler()
+
     start_time = time.time()
     while True:
         if not isConnected:
@@ -74,6 +87,9 @@ def parse_msgs():
             start_time = time.time()
             ranges, thetas = mbot.read_lidar()
             x, y, theta = mbot.read_odometry()
+            img = camera.get_processed_image(save=False)
+            data = np.asarray(img).reshape(1, -1)
+            pred = clf.predict(data)[0]
             msg = json.dumps({
                                 'pose': {
                                     'x': x,
@@ -83,7 +99,8 @@ def parse_msgs():
                                 'scan': {
                                     'ranges': ranges,
                                     'thetas': thetas
-                                }
+                                },
+                                'prediction': pred 
                                 })
             with out_msgs_lock:
                 out_msgs.append(msg)
