@@ -88,8 +88,10 @@ def parse_msgs():
             ranges, thetas = mbot.read_lidar()
             x, y, theta = mbot.read_odometry()
             img = camera.get_processed_image(save=False)
-            data = np.asarray(img).reshape(1, -1)
-            pred = clf.predict(data)[0]
+            pred = -1
+            if (img is not None):
+                pred = clf.predict(img.reshape(1, -1))[0]
+            
             msg = json.dumps({
                                 'pose': {
                                     'x': x,
@@ -100,7 +102,7 @@ def parse_msgs():
                                     'ranges': ranges,
                                     'thetas': thetas
                                 },
-                                'prediction': pred 
+                                'prediction': int(pred)
                                 })
             with out_msgs_lock:
                 out_msgs.append(msg)
