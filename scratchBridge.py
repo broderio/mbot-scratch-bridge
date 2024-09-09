@@ -12,7 +12,7 @@ from PIL import Image
 import numpy as np
 from joblib import dump, load
 
-PATH_TO_MODEL = "two_layer_nn.joblib"
+PATH_TO_MODEL = "/home/mbot/scratch/mbot-scratch-bridge/two_layer_nn.joblib"
 
 mbot = MBot()
 in_msgs = []
@@ -84,29 +84,31 @@ def parse_msgs():
                 parse_json_msg(message)
         
         if (time.time() - start_time) > 0.1:
-            start_time = time.time()
-            ranges, thetas = mbot.read_lidar()
-            x, y, theta = mbot.read_odometry()
-            img = camera.get_processed_image(save=False)
-            pred = -1
-            if (img is not None):
-                pred = clf.predict(img.reshape(1, -1))[0]
-            
-            msg = json.dumps({
-                                'pose': {
-                                    'x': x,
-                                    'y': y,
-                                    'theta': theta
-                                },
-                                'scan': {
-                                    'ranges': ranges,
-                                    'thetas': thetas
-                                },
-                                'prediction': int(pred)
-                                })
-            with out_msgs_lock:
-                out_msgs.append(msg)
-                    
+            try:   
+                start_time = time.time()
+                ranges, thetas = mbot.read_lidar()
+                x, y, theta = mbot.read_odometry()
+                img = camera.get_processed_image(save=False)
+                pred = -1
+                if (img is not None):
+                    pred = clf.predict(img.reshape(1, -1))[0]
+                
+                msg = json.dumps({
+                                    'pose': {
+                                        'x': x,
+                                        'y': y,
+                                        'theta': theta
+                                    },
+                                    'scan': {
+                                        'ranges': ranges,
+                                        'thetas': thetas
+                                    },
+                                    'prediction': int(pred)
+                                    })
+                with out_msgs_lock:
+                    out_msgs.append(msg)
+            except:
+               pass
 def main():
     parse_thread = Thread(target=parse_msgs, name='parse_thread', daemon=True)
     parse_thread.start()

@@ -1,0 +1,14 @@
+[Unit]
+Description=Server for the MBot web app
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=bash /home/mbot/scratch/mbot-scratch-bridge/start.sh
+User=root
+
+[Install]
+WantedBy=multi-user.target
